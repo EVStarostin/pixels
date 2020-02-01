@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Canvas</title>
+    <style>
+        #container {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+
+    <script>
+        class Canvas {
+            constructor(w, h, t) {
+                this._timeLimit = t;
+                this._startTime = new Date();
+
+                this._node = document.createElement('canvas');
+                this._ctx = this._node.getContext("2d");
+
+                this.resize(w, h);
+            }
+
+            render(parentNode) {
+                this._color();
+                this._print();
+
+                if (!this._node.parentNode) {
+                    parentNode.appendChild(this._node);
+                }
+            }
+
+            resize(w, h) {
+                this._node.width = w;
+                this._node.height = h;
+            }
+
+            _color() {
+                const newImageData = this._ctx.createImageData(this._node.width, this._node.height);
+
+                for (let i = 0; i < this._node.width; i++) {
+                    for (let j = 0; j < this._node.height; j++) {
+                        const idx = (i + j * this._node.width) * 4;
+
+                        const r = this._random(0, 255),
+                            g = this._random(0, 255),
+                            b = this._random(0, 255),
+                            a = 255;
+
+                        newImageData.data[idx] = r;
+                        newImageData.data[idx + 1] = g;
+                        newImageData.data[idx + 2] = b;
+                        newImageData.data[idx + 3] = a;
+                    }
+                }
+
+                this._ctx.putImageData(newImageData, 0, 0);
+            }
+
+            _print() {
+                const timeLeft = this._startTime - new Date() + this._timeLimit;
+                const text = timeLeft > 0 ? this._format(timeLeft) : '00:00';
+
+                this._ctx.fillStyle = '#FFF';
+                this._ctx.font = `bold ${this._node.width / 5}px sans-serif`;
+                this._ctx.textAlign = 'center';
+                this._ctx.textBaseline = 'middle';
+                this._ctx.fillText(text, this._node.width / 2, this._node.height / 2);
+            }
+
+            _random(min, max) {
+                return min + Math.random() * (max + 1 - min);
+            }
+
+            _format(time) {
+                const m = Math.floor(time / 60 / 1000);
+                const s = Math.floor(time % 60000 / 1000);
+
+                return this._addZeros(m, 2) + ':' + this._addZeros(s, 2);
+            }
+
+            _addZeros(text, number) {
+                const length = text.toString().length;
+
+                return '0'.repeat(number - length) + text;
+            }
+        }
+
+        const container = document.getElementById('container');
+        const canvas = new Canvas(container.clientWidth, container.clientHeight, 5 * 60 * 1000);
+
+        window.addEventListener('resize', () => {
+            canvas.resize(document.documentElement.clientWidth, document.documentElement.clientHeight);
+        });
+
+        (function () {
+            function animate() {
+                requestAnimationFrame(animate);
+
+                canvas.render(container);
+            }
+
+            animate();
+        })();
+    </script>
+</body>
+
+</html>
